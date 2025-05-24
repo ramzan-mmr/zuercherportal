@@ -1,6 +1,9 @@
+
 const path = require('path')
 const fs = require("fs")
 const ExcelJS = require("exceljs")
+const nodemailer = require('nodemailer');
+const { baseUrl } = require('./Constant');
 
 // Ensure bucket folder exists
 const bucketDir = path.join(__dirname, '../../bucket');
@@ -18,7 +21,7 @@ const saveImageToBucket = (base64Data, id) => {
 
     fs.writeFileSync(imagePath, base64Content, 'base64');
 
-    return `http://localhost:3000/bucket/${filename}`;
+    return `${baseUrl}bucket/${filename}`;
   } catch (error) {
     console.error(`Error saving image for ID ${id}:`, error.message);
     return '';
@@ -42,12 +45,12 @@ const generateExcel = async (data) => {
   ];
 
   // 3) Add your data rows
-data.forEach((item, index) => {
-  const date = new Date(item.Export_Date);
+  data.forEach((item, index) => {
+    const date = new Date(item.Export_Date);
     const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
     const row = worksheet.addRow({
       id: item.id,
-      Export_Date: formattedDate, 
+      Export_Date: formattedDate,
       Name: item.Name,
       Arrest_Date: item.Arrest_Date,
       Charges: item.Charges,
@@ -57,8 +60,8 @@ data.forEach((item, index) => {
     // Make Image_Url a hyperlink
     if (item.Image_Url && item.Image_Url.startsWith('http')) {
       const cell = row.getCell('Image_Url');
-      cell.value = { 
-        text: item.Image_Url, 
+      cell.value = {
+        text: item.Image_Url,
         hyperlink: item.Image_Url,
         tooltip: 'Click to view image'
       };
@@ -76,12 +79,39 @@ data.forEach((item, index) => {
   }
   await workbook.xlsx.writeFile(filename);
 
+  let url = `${baseUrl}${filename}`
+
   // 6) Return for your API
   return {
     path: excelPath,
-    url: `http://localhost:3000/${filename}`,
+    url: url,
+    filename:filename
   };
 };
 
+const sendEmail = (mailOptions) => {
+  return new Promise((resolve, reject) => {
+    const transporter = nodemailer.createTransport({
+      host: 'server281.web-hosting.com',
+      port: 465,
+      secure: true,
+      auth: {
+        user: 'info@nomapvt.com',
+        pass: 'Noma.321#@!',
+      },
+      tls: {
+        rejectUnauthorized: false
+      },
+    });
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        return reject(error);
+      }
+      resolve(info);
+    });
+  });
+};
 
-module.exports = { saveImageToBucket, generateExcel };
+
+
+module.exports = { saveImageToBucket, generateExcel, sendEmail };
