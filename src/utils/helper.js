@@ -4,6 +4,7 @@ const fs = require("fs")
 const ExcelJS = require("exceljs")
 const nodemailer = require('nodemailer');
 const { baseUrl } = require('./Constant');
+const moment = require('moment-timezone');
 
 // Ensure bucket folder exists
 const bucketDir = path.join(__dirname, '../../bucket');
@@ -46,8 +47,11 @@ const generateExcel = async (data) => {
 
   // 3) Add your data rows
   data.forEach((item, index) => {
-    const date = new Date(item.Export_Date);
-    const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+    // const date = new Date(item.Export_Date);
+    // const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+    const date = moment.tz(item.Export_Date, 'UTC');
+    const formattedDate = date.tz('America/Denver').format('YYYY-MM-DD HH:mm:ss');
+
     const row = worksheet.addRow({
       id: item.id,
       Export_Date: formattedDate,
@@ -85,19 +89,19 @@ const generateExcel = async (data) => {
   return {
     path: excelPath,
     url: url,
-    filename:filename
+    filename: filename
   };
 };
 
 const sendEmail = (mailOptions) => {
   return new Promise((resolve, reject) => {
     const transporter = nodemailer.createTransport({
-      host: 'server281.web-hosting.com',
+      host: 'server215.web-hosting.com',
       port: 465,
       secure: true,
       auth: {
-        user: 'info@nomapvt.com',
-        pass: 'Noma.321#@!',
+        user: 'info@abramneumann.com',
+        pass: '3,.EW4oYS-jI',
       },
       tls: {
         rejectUnauthorized: false
